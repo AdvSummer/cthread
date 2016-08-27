@@ -1,0 +1,8 @@
+*o
+!support.o
+
+exemplos/*
+!exemplos/*.c
+!exemplos/Makefile
+
+lib/*
