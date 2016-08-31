@@ -1,13 +1,13 @@
 
 /********************************************************************
 
-	Biblioteca de Filas
-	Vers. 1.0 - 3/3/16
+	Support Library
+	Vers. 1.0 - 10/08/16
 	
 ********************************************************************/
 
-#ifndef	__FILA2_H__
-#define	__FILA2_H__
+#ifndef	__SUPPORTE_H__
+#define	__SUPPORTE_H__
 
 struct	sFilaNode2 {
 	void 	*node;			// Ponteiro para a estrutura de dados do NODO
@@ -24,6 +24,15 @@ typedef struct sFilaNode2	NODE2;
 typedef struct sFila2		FILA2;
 typedef struct sFilaNode2 *	PNODE2;
 typedef struct sFila2 *		PFILA2;
+
+/*-------------------------------------------------------------------
+Função:	Informa a versao da biblioteca
+Ret:	Numero da versao
+-------------------------------------------------------------------*/
+#define Year	2016
+#define	Term	2
+#define Version()	((2*Year)+(Term-1))
+
 
 /*-------------------------------------------------------------------
 Função:	Inicializa uma estrutura de dados do tipo FILA2
@@ -82,6 +91,12 @@ Ret:	==0, se conseguiu
 	!=0, caso contrário (erro)
 -------------------------------------------------------------------*/
 int	DeleteAtIteratorFila2(PFILA2 pFila);
+
+/*-------------------------------------------------------------------
+Função:	Gera um número pseudo-aleatório entre 0 e 65535
+Ret:	Número gerado
+-------------------------------------------------------------------*/
+unsigned int	Random2();
 
 
 #endif
