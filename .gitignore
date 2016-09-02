@@ -5,4 +5,7 @@ exemplos/*
 !exemplos/*.c
 !exemplos/Makefile
 
+testes/*
+!testes/*.c
+
 lib/*
