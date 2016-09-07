@@ -21,17 +21,17 @@ TSTS=$(addprefix $(TST), $(notdir $(_TSTS:.c=)))
 
 .PHONY: directories
 
-all: directories $(TSTS)
+all: directories $(LIB)$(CTHREAD) $(TSTS)
 	$(TSTS:%=% ;)
 
 directories:
 	mkdir -p -v $(DIRS)
 
 $(TST)%: $(TST)%.c $(LIB)$(CTHREAD)
-	$(CC) $(CCFLAGS) $(LDFLAGS) -o $@ $<
+	$(CC) $(CCFLAGS) -o $@ $< $(LDFLAGS)
 
 $(LIB)$(CTHREAD): $(OBJS)
-	ar crs $(LIB)libcthread.a $(BIN)support.o $(OBJS)
+	ar crs $@ $(BIN)support.o $(OBJS)
 
 $(BIN)%.o: $(SRC)%.c
 	$(CC) $(CCFLAGS) -o $@ -c $<
