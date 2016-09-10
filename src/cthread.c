@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // bool that controls whether any cthread function has been called
 // this is needed because we need to save the thread main context
@@ -33,12 +34,10 @@ static void* dispatch_thread(void *args)
 static void initialize()
 {
     // make a context for the thread dispatcher
-    char dispatcher_stack[SIGSTKSZ];
-
     getcontext(&dispatcher);
     dispatcher.uc_link = 0;
-    dispatcher.uc_stack.ss_sp = dispatcher_stack;
-    dispatcher.uc_stack.ss_size = sizeof(dispatcher_stack);
+    dispatcher.uc_stack.ss_sp = malloc(SIGSTKSZ);
+    dispatcher.uc_stack.ss_size = SIGSTKSZ;
     makecontext(&dispatcher, (void (*)(void))dispatch_thread, 0);
 
     // initialize thread queues
@@ -46,13 +45,13 @@ static void initialize()
     CreateFila2(&queue_thread_blocked);
 
     // save main thread context
-    TCB_t thread_main;
-    thread_main.tid = 0; // tid for the main thread must be zero
-    thread_main.state = PROCST_EXEC;
-    thread_main.ticket = random_ticket();
-    getcontext(&thread_main.context);
+    TCB_t *thread_main = malloc(sizeof(TCB_t));
+    thread_main->tid = 0; // tid for the main thread must be zero
+    thread_main->state = PROCST_EXEC;
+    thread_main->ticket = random_ticket();
+    getcontext(&thread_main->context);
 
-    thread_running = &thread_main;
+    thread_running = thread_main;
 
     cthread_init = true;
 }
@@ -65,24 +64,24 @@ int ccreate(void* (*start)(void*), void *arg)
         initialize();
     }
 
-    char new_thread_stack[SIGSTKSZ];
-
-    TCB_t new_thread;
-    new_thread.tid = tid_counter;
+    TCB_t *new_thread = malloc(sizeof(TCB_t));
+    new_thread->tid = tid_counter;
     tid_counter++;
 
-    new_thread.state = PROCST_APTO;
-    new_thread.ticket = random_ticket();
+    new_thread->state = PROCST_APTO;
+    new_thread->ticket = random_ticket();
 
-    getcontext(&new_thread.context);
-    new_thread.context.uc_link = &dispatcher;
-    new_thread.context.uc_stack.ss_sp = new_thread_stack;
-    new_thread.context.uc_stack.ss_size = sizeof(new_thread_stack);
-    makecontext(&new_thread.context, (void (*)(void))start, 1, arg);
+    getcontext(&new_thread->context);
+    new_thread->context.uc_link = &dispatcher;
+    new_thread->context.uc_stack.ss_sp = malloc(SIGSTKSZ);
+    new_thread->context.uc_stack.ss_size = SIGSTKSZ;
+    makecontext(&new_thread->context, (void (*)(void))start, 1, arg);
 
     AppendFila2(&queue_thread_ready, (void*)&new_thread);
 
-    return new_thread.tid;
+    setcontext(&new_thread->context);
+
+    return new_thread->tid;
 }
 
 int cyield(void)
