@@ -16,6 +16,7 @@
 #define PROCST_TERMINO  4
 
 #define MAX_TICKETS 256
+#define CRAND_MAX 65535
 
 /* NÃO ALTERAR ESSA struct */
 typedef struct s_TCB { 

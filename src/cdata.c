@@ -5,8 +5,8 @@
 
 unsigned int random_ticket()
 {
-    unsigned int bin_size = (RAND_MAX + 1u) / MAX_TICKETS;
-    unsigned int leftover = (RAND_MAX + 1u) % MAX_TICKETS;
+    unsigned int bin_size = (CRAND_MAX + 1u) / MAX_TICKETS;
+    unsigned int leftover = (CRAND_MAX + 1u) % MAX_TICKETS;
 
     unsigned int random_number;
     do
