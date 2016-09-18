@@ -13,7 +13,7 @@ unsigned int random_ticket()
     {
         random_number = Random2();
     }
-    while(random_number >= RAND_MAX + 1u - leftover);
+    while (random_number >= RAND_MAX + 1u - leftover);
 
     return random_number / bin_size;
 }

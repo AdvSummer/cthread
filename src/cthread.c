@@ -34,7 +34,7 @@ static void unjoin_thread(int tid)
     FirstFila2(&queue_thread_join);
     do
     {
-        if(queue_thread_join.it == 0)
+        if (queue_thread_join.it == 0)
         {
             break;
         }
@@ -62,7 +62,7 @@ static void unjoin_thread(int tid)
             else
             {
                 thread = (TCB_t*)GetAtIteratorFila2(&queue_thread_blocked);
-                if(join->thread == thread)
+                if (join->thread == thread)
                 {
                     DeleteAtIteratorFila2(&queue_thread_blocked);
                     AppendFila2(&queue_thread_ready, (void*) thread);
@@ -97,11 +97,11 @@ static void* dispatch_thread(void *args)
     winning_thread = (TCB_t*)GetAtIteratorFila2(&queue_thread_ready);
     winning_delta = abs(winning_ticket - winning_thread->ticket);
 
-    while(NextFila2(&queue_thread_ready) == 0)
+    while (NextFila2(&queue_thread_ready) == 0)
     {
         // NextFila2 returns 0 even when it reaches the
         // end of the queue, check if iterator is null
-        if(queue_thread_ready.it == 0)
+        if (queue_thread_ready.it == 0)
         {
             break;
         }
@@ -109,9 +109,9 @@ static void* dispatch_thread(void *args)
         current_thread = (TCB_t*)GetAtIteratorFila2(&queue_thread_ready);
         current_delta = abs(winning_ticket - current_thread->ticket);
 
-        if(current_delta < winning_delta ||
-           (current_delta == winning_delta &&
-            current_thread->tid < winning_thread->tid))
+        if (current_delta < winning_delta ||
+            (current_delta == winning_delta &&
+             current_thread->tid < winning_thread->tid))
         {
             node_iterator = queue_thread_ready.it;
             winning_thread = current_thread;
@@ -157,7 +157,7 @@ static void initialize()
 // TO-DO: catch possible errors and return error code
 int ccreate(void* (*start)(void*), void *arg)
 {
-    if(!cthread_init)
+    if (!cthread_init)
     {
         initialize();
     }
@@ -182,7 +182,7 @@ int ccreate(void* (*start)(void*), void *arg)
 
 int cyield(void)
 {
-    if(!cthread_init)
+    if (!cthread_init)
     {
         initialize();
     }
@@ -201,7 +201,7 @@ int cyield(void)
 
 int cjoin(int tid)
 {
-    if(!cthread_init)
+    if (!cthread_init)
     {
         initialize();
     }
@@ -233,7 +233,7 @@ int cjoin(int tid)
 
 int csem_init(csem_t *sem, int count)
 {
-    if(!cthread_init)
+    if (!cthread_init)
     {
         initialize();
     }
@@ -242,7 +242,7 @@ int csem_init(csem_t *sem, int count)
 
 int cwait(csem_t *sem)
 {
-    if(!cthread_init)
+    if (!cthread_init)
     {
         initialize();
     }
@@ -251,7 +251,7 @@ int cwait(csem_t *sem)
 
 int csignal(csem_t *sem)
 {
-    if(!cthread_init)
+    if (!cthread_init)
     {
         initialize();
     }
