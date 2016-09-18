@@ -17,3 +17,26 @@ unsigned int random_ticket()
 
     return random_number / bin_size;
 }
+
+int thread_exists(PFILA2 queue, int tid)
+{
+    TCB_t *thread;
+    FirstFila2(queue);
+    do
+    {
+        if (queue->it == 0)
+        {
+            break;
+        }
+        else
+        {
+            thread = (TCB_t*)GetAtIteratorFila2(queue);
+            if (thread->tid == tid)
+            {
+                return 0;
+            }
+        }
+    } while (NextFila2(queue) == 0);
+
+    return -1;
+}

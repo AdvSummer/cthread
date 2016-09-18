@@ -22,24 +22,67 @@ static TCB_t *thread_running;
 static FILA2 queue_thread_ready;
 static FILA2 queue_thread_blocked;
 
+// queue for joined threads
+static FILA2 queue_thread_join;
+
 // tid  used to identify a thread
 static int tid_counter = 1;
+
+static void unjoin_thread(int tid)
+{
+    join_t *join = 0;
+    FirstFila2(&queue_thread_join);
+    do
+    {
+        if(queue_thread_join.it == 0)
+        {
+            break;
+        }
+        else
+        {
+            join = (join_t*)GetAtIteratorFila2(&queue_thread_join);
+            if (join->tid == tid)
+            {
+                break;
+            }
+            join = 0;
+        }
+    } while (NextFila2(&queue_thread_join) == 0);
+
+    if (join)
+    {
+        TCB_t *thread;
+        FirstFila2(&queue_thread_blocked);
+        do
+        {
+            if (queue_thread_blocked.it == 0)
+            {
+                break;
+            }
+            else
+            {
+                thread = (TCB_t*)GetAtIteratorFila2(&queue_thread_blocked);
+                if(join->thread == thread)
+                {
+                    DeleteAtIteratorFila2(&queue_thread_blocked);
+                    AppendFila2(&queue_thread_ready, (void*) thread);
+                    break;
+                }
+            }
+        } while (NextFila2(&queue_thread_blocked) == 0);
+    }
+}
 
 // thread dispatcher, responsible for drawing a ticket and selecting the
 // thread with the closest ticket number to execution
 static void* dispatch_thread(void *args)
 {
-    // if thread_running is in ready state, the thread yielded
-    if(thread_running->state == PROCST_APTO)
+    if (thread_running)
     {
-        AppendFila2(&queue_thread_ready, (void*)thread_running);
-    }
-    else // thread_running finished and called dispatcher through uc_link
-    {
+        unjoin_thread(thread_running->tid);
         free(thread_running);
+        thread_running = 0;
     }
-
-    thread_running = 0;
 
     int winning_ticket = random_ticket();
 
@@ -52,7 +95,6 @@ static void* dispatch_thread(void *args)
     FirstFila2(&queue_thread_ready);
     node_iterator = queue_thread_ready.it;
     winning_thread = (TCB_t*)GetAtIteratorFila2(&queue_thread_ready);
-    printf("%d\n", winning_thread->tid);
     winning_delta = abs(winning_ticket - winning_thread->ticket);
 
     while(NextFila2(&queue_thread_ready) == 0)
@@ -97,6 +139,7 @@ static void initialize()
     // initialize thread queues
     CreateFila2(&queue_thread_ready);
     CreateFila2(&queue_thread_blocked);
+    CreateFila2(&queue_thread_join);
 
     // save main thread context
     // TO-DO: there isn't any chance to free thread_main, make variable global?
@@ -144,8 +187,13 @@ int cyield(void)
         initialize();
     }
 
+    TCB_t *thread = thread_running;
+
     // thread_running is about to yield, set state to ready
-    thread_running->state = PROCST_APTO;
+    thread->state = PROCST_APTO;
+    AppendFila2(&queue_thread_ready, (void*)thread);
+    thread_running = 0;
+
     swapcontext(&thread_running->context, &dispatcher);
 
     return 0;
@@ -157,7 +205,30 @@ int cjoin(int tid)
     {
         initialize();
     }
-    return 0;
+
+    if (thread_exists(&queue_thread_ready, tid) == 0 ||
+        thread_exists(&queue_thread_blocked, tid) == 0)
+    {
+        TCB_t *thread = thread_running;
+
+        join_t *join = malloc(sizeof(join_t));
+        join->thread = thread;
+        join->tid = tid;
+
+        AppendFila2(&queue_thread_join, (void*)join);
+
+        thread->state = PROCST_BLOQ;
+        AppendFila2(&queue_thread_blocked, (void*)thread);
+        thread_running = 0;
+
+        swapcontext(&thread->context, &dispatcher);
+
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
 }
 
 int csem_init(csem_t *sem, int count)

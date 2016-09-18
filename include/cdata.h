@@ -8,6 +8,7 @@
 #define __cdata__
 
 #include <ucontext.h>
+#include <support.h>
 
 #define PROCST_CRIACAO  0
 #define PROCST_APTO 1
@@ -27,10 +28,21 @@ typedef struct s_TCB {
     ucontext_t context; // contexto de execução da thread (SP, PC, GPRs e recursos)
 } TCB_t; 
 
+typedef struct s_join {
+    TCB_t *thread; // blocked thread
+    int tid; // tid of blocking thread
+} join_t;
+
 /*
  * Draw a ticket to be assigned to a thread or to select winning thread
  * the ticket is a number in the interval [0, MAX_TICKETS)
  */
 unsigned int random_ticket();
+
+/*
+ * return 0 if thread with tid exists in queue
+ * else return -1
+ */
+int thread_exists(PFILA2 queue, int tid);
 
 #endif
