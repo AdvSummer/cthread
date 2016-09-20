@@ -237,6 +237,10 @@ int csem_init(csem_t *sem, int count)
     {
         initialize();
     }
+
+    sem->count = count;
+    sem->fila = malloc(sizeof(FILA2));
+
     return 0;
 }
 
@@ -246,6 +250,22 @@ int cwait(csem_t *sem)
     {
         initialize();
     }
+
+    while (sem->count <= 0)
+    {
+        printf("wait: %d\n", sem->count);
+        TCB_t *thread = thread_running;
+
+        thread->state = PROCST_BLOQ;
+        AppendFila2(sem->fila, (void*)thread);
+        AppendFila2(&queue_thread_blocked, (void*)thread);
+        thread_running = 0;
+
+        swapcontext(&thread->context, &dispatcher);
+    }
+
+    sem->count--;
+
     return 0;
 }
 
@@ -255,5 +275,37 @@ int csignal(csem_t *sem)
     {
         initialize();
     }
+
+    sem->count++;
+
+    if (sem->count > 0)
+    {
+        FirstFila2(sem->fila);
+        if (sem->fila->it != 0)
+        {
+            TCB_t *thread_sem = (TCB_t*)GetAtIteratorFila2(sem->fila);
+
+            TCB_t *thread;
+            FirstFila2(&queue_thread_blocked);
+            do
+            {
+                if (queue_thread_blocked.it == 0)
+                {
+                    break;
+                }
+
+                thread = (TCB_t*)GetAtIteratorFila2(&queue_thread_blocked);
+                if (thread_sem == thread)
+                {
+                    thread_sem->state = PROCST_APTO;
+                    DeleteAtIteratorFila2(sem->fila);
+                    AppendFila2(&queue_thread_ready, (void*)thread_sem);
+                    break;
+                }
+
+            } while (NextFila2(&queue_thread_blocked));
+        }
+    }
+
     return 0;
 }
