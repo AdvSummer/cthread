@@ -16,6 +16,10 @@ static bool cthread_init = false;
 // every thread, this way, when any thread finishes, this context
 // will start to select a new thread for execution or end the program
 static ucontext_t dispatcher;
+static char dispatcher_stack[SIGSTKSZ];
+
+// thread_main tcb
+static TCB_t thread_main;
 
 // possible states for a thread
 static TCB_t *thread_running;
@@ -64,6 +68,9 @@ static void unjoin_thread(int tid)
                 thread = (TCB_t*)GetAtIteratorFila2(&queue_thread_blocked);
                 if (join->thread == thread)
                 {
+                    DeleteAtIteratorFila2(&queue_thread_join);
+                    free(join);
+
                     DeleteAtIteratorFila2(&queue_thread_blocked);
                     AppendFila2(&queue_thread_ready, (void*) thread);
                     break;
@@ -80,6 +87,7 @@ static void* dispatch_thread(void *args)
     if (thread_running)
     {
         unjoin_thread(thread_running->tid);
+        free(thread_running->context.uc_stack.ss_sp);
         free(thread_running);
         thread_running = 0;
     }
@@ -132,7 +140,7 @@ static void initialize()
     // make a context for the thread dispatcher
     getcontext(&dispatcher);
     dispatcher.uc_link = 0;
-    dispatcher.uc_stack.ss_sp = malloc(SIGSTKSZ);
+    dispatcher.uc_stack.ss_sp = dispatcher_stack;
     dispatcher.uc_stack.ss_size = SIGSTKSZ;
     makecontext(&dispatcher, (void (*)(void))dispatch_thread, 0);
 
@@ -142,14 +150,12 @@ static void initialize()
     CreateFila2(&queue_thread_join);
 
     // save main thread context
-    // TO-DO: there isn't any chance to free thread_main, make variable global?
-    TCB_t *thread_main = malloc(sizeof(TCB_t));
-    thread_main->tid = 0; // tid for the main thread must be zero
-    thread_main->state = PROCST_EXEC;
-    thread_main->ticket = random_ticket();
-    getcontext(&thread_main->context);
+    thread_main.tid = 0; // tid for the main thread must be zero
+    thread_main.state = PROCST_EXEC;
+    thread_main.ticket = random_ticket();
+    getcontext(&thread_main.context);
 
-    thread_running = thread_main;
+    thread_running = &thread_main;
 
     cthread_init = true;
 }
@@ -240,6 +246,7 @@ int csem_init(csem_t *sem, int count)
 
     sem->count = count;
     sem->fila = malloc(sizeof(FILA2));
+    CreateFila2(sem->fila);
 
     return 0;
 }
@@ -253,7 +260,6 @@ int cwait(csem_t *sem)
 
     while (sem->count <= 0)
     {
-        printf("wait: %d\n", sem->count);
         TCB_t *thread = thread_running;
 
         thread->state = PROCST_BLOQ;
@@ -299,6 +305,7 @@ int csignal(csem_t *sem)
                 {
                     thread_sem->state = PROCST_APTO;
                     DeleteAtIteratorFila2(sem->fila);
+                    DeleteAtIteratorFila2(&queue_thread_blocked);
                     AppendFila2(&queue_thread_ready, (void*)thread_sem);
                     break;
                 }
