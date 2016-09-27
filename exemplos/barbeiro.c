@@ -40,7 +40,7 @@ void sleepao() {
 
 void cut_hair(void)
 {
-    cyield(); cyield(); cyield(); cyield;
+    cyield(); cyield(); cyield(); cyield();
     return;
 }
 

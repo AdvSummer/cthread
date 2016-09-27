@@ -2,7 +2,7 @@
 # Makefile para programas exemplo
 # 
 
-CC=gcc
+CC=gcc -m32
 LIB_DIR=../lib
 
 all: exemplo mandel teste_vetor barbeiro filosofos prodcons series
