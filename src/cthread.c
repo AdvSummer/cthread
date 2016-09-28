@@ -160,7 +160,6 @@ static void initialize()
     cthread_init = true;
 }
 
-// TO-DO: catch possible errors and return error code
 int ccreate(void* (*start)(void*), void *arg)
 {
     if (!cthread_init)

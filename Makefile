@@ -19,19 +19,19 @@ _TSTS=$(wildcard $(TST)*.c)
 TSTS=$(addprefix $(TST), $(notdir $(_TSTS:.c=)))
 
 
-.PHONY: directories
+.PHONY: directories tests
 
-all: directories $(LIB)$(CTHREAD) $(TSTS)
-	$(TSTS:%=% ;)
+all: directories $(OBJS)
+	ar crs $(LIB)$(CTHREAD) $(BIN)support.o $(OBJS)
 
 directories:
 	mkdir -p -v $(DIRS)
 
-$(TST)%: $(TST)%.c $(LIB)$(CTHREAD)
-	$(CC) $(CCFLAGS) -o $@ $< $(LDFLAGS)
+tests: all $(TSTS)
+	$(TSTS:%=% ;)
 
-$(LIB)$(CTHREAD): $(OBJS)
-	ar crs $@ $(BIN)support.o $(OBJS)
+$(TST)%: $(TST)%.c
+	$(CC) $(CCFLAGS) -o $@ $< $(LDFLAGS)
 
 $(BIN)%.o: $(SRC)%.c
 	$(CC) $(CCFLAGS) -o $@ -c $<
