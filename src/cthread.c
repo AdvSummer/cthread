@@ -332,5 +332,5 @@ int cidentify(char *name, int size)
 {
     char names[] = "Leonardo Abreu Nahra: 242256\n" \
                    "Pedro Frederico Kampmann: 242244\n";
-    return snprintf(name, size, names) == 62 ? 0 : -1;
+    return snprintf(name, size, "%s", names) == 62 ? 0 : -1;
 }

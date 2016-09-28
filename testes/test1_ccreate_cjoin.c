@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 {
 	printf("----- TEST 1 - ccreate - cjoin -----\n" \
 		   "test the creation of cthreads, as well as the joins needed for\n" \
-		   "correct end execution and ending of all cthreads\n\n");
+		   "the correct execution and ending of all cthreads\n\n");
 
 	int tid1 = ccreate((void*(*)(void*))function1, 0);
 	if (tid1)
